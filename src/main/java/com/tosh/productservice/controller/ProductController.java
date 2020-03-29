@@ -1,5 +1,6 @@
 package com.tosh.productservice.controller;
 
+import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
 import com.tosh.productservice.model.Coupon;
 import com.tosh.productservice.model.Product;
 import com.tosh.productservice.repository.ProductRepo;
@@ -20,10 +21,15 @@ public class ProductController {
     @Autowired
     private ProductRepo repo;
 
+    @HystrixCommand(fallbackMethod = "sendErrorResponse")
     @PostMapping(value = "/products")
     private Product create(@RequestBody Product product){
         Coupon coupon = couponClient.getCoupon(product.getCouponCode());
         product.setPrice(product.getPrice().subtract(coupon.getDiscount()));
         return repo.save(product);
+    }
+
+    private Product sendErrorResponse(Product product){
+        return product;
     }
 }
